@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:new1/widgets/app_button.dart';
 
 import '../models/product.dart';
 import '../services/cart_manager.dart';
@@ -47,7 +48,7 @@ class ProductDetailPage extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               height: 52,
-              child: ElevatedButton.icon(
+              child: AppButton(
                 onPressed: () {
                   CartManager.add(product);
 
@@ -57,11 +58,9 @@ class ProductDetailPage extends StatelessWidget {
                     ),
                   );
                 },
-                icon: const Icon(Icons.shopping_cart_outlined),
-                label: const Text(
-                  'Tambah ke Keranjang',
-                  style: TextStyle(fontSize: 16, fontWeight: .bold),
-                ),
+                icon: Icons.shopping_cart_outlined,
+
+                text: 'Tambah ke Keranjang',
               ),
             ),
           ],

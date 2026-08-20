@@ -100,6 +100,7 @@ class _LoginPageState extends State<LoginPage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Fitur lupa password belum tersedia'),
+                          backgroundColor: Colors.green,
                         ),
                       );
                     },

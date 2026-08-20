@@ -4,12 +4,14 @@ class AppButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
   final bool isLoading;
+  final IconData? icon;
 
   const AppButton({
     super.key,
     required this.text,
     required this.onPressed,
     this.isLoading = false,
+    this.icon,
   });
 
   @override
@@ -35,7 +37,18 @@ class AppButton extends StatelessWidget {
                   color: Colors.white,
                 ),
               )
-            : Text(text, style: TextStyle(fontSize: 16, fontWeight: .bold)),
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (icon != null) Icon(icon),
+                  if (icon != null) const SizedBox(width: 8),
+                  Text(
+                    text,
+                    style: const TextStyle(fontSize: 16, fontWeight: .bold),
+                  ),
+                ],
+              ),
       ),
     );
   }

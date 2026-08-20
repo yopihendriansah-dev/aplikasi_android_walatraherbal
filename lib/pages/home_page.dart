@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/product.dart';
 import 'product_detail_page.dart';
 import 'cart_page.dart';
+import '../utils/currency_formatter.dart';
 
 class HomePage extends StatelessWidget {
   final List<Product> products = const [
@@ -104,7 +105,7 @@ class HomePage extends StatelessWidget {
               title: Text(product.name, style: TextStyle(fontWeight: .bold)),
               subtitle: Text(product.category),
               trailing: Text(
-                'Rp ${product.price.toStringAsFixed(0)}',
+                CurrencyFormatter.format(product.price),
                 style: const TextStyle(fontWeight: .bold),
               ),
             ),
