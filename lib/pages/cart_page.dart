@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../widgets/app_button.dart';
 import '../services/cart_manager.dart';
 import '../utils/currency_formatter.dart';
-import 'checkout_page.dart';
 
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
@@ -55,8 +54,10 @@ class CartPage extends StatelessWidget {
                                 Row(
                                   children: [
                                     IconButton(
-                                      onPressed: () {
-                                        CartManager.descreaseQuantity(index);
+                                      onPressed: () async {
+                                        await CartManager.decreaseQuantity(
+                                          index,
+                                        );
                                       },
                                       icon: const Icon(
                                         Icons.remove_circle_outline,
@@ -68,8 +69,10 @@ class CartPage extends StatelessWidget {
                                       style: const TextStyle(fontWeight: .bold),
                                     ),
                                     IconButton(
-                                      onPressed: () {
-                                        CartManager.increaseQuantity(index);
+                                      onPressed: () async {
+                                        await CartManager.increaseQuantity(
+                                          index,
+                                        );
                                       },
                                       icon: Icon(Icons.add_circle_outline),
                                     ),
@@ -80,8 +83,8 @@ class CartPage extends StatelessWidget {
                           ],
                         ),
                         trailing: IconButton(
-                          onPressed: () {
-                            CartManager.removeAt(index);
+                          onPressed: () async {
+                            await CartManager.removeAt(index);
                           },
                           icon: Icon(Icons.delete_outline),
                         ),
@@ -119,12 +122,7 @@ class CartPage extends StatelessWidget {
                         text: 'Checkout',
                         icon: Icons.shopping_cart_checkout,
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const CheckoutPage(),
-                            ),
-                          );
+                          Navigator.pushNamed(context, '/checkout');
                         },
                       ),
                     ),

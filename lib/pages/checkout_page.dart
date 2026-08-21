@@ -4,6 +4,8 @@ import '../services/cart_manager.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_text_field.dart';
+import '../models/order.dart';
+import '../services/order_manager.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -15,6 +17,8 @@ class CheckoutPage extends StatefulWidget {
 class _CheckoutPageState extends State<CheckoutPage> {
   final formKey = GlobalKey<FormState>();
   final addressController = TextEditingController();
+  String? selectedPaymentMethod;
+
   @override
   void dispose() {
     addressController.dispose();
@@ -55,6 +59,35 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 },
               ),
 
+              const SizedBox(height: 16),
+
+              DropdownButtonFormField<String>(
+                initialValue: selectedPaymentMethod,
+                decoration: InputDecoration(
+                  labelText: 'Metode Pembayaran',
+                  prefixIcon: const Icon(Icons.paypal_outlined),
+                  border: OutlineInputBorder(borderRadius: .circular(12)),
+                ),
+                items: const [
+                  DropdownMenuItem(
+                    value: 'Transfer Bangk',
+                    child: Text('Transfer Bank'),
+                  ),
+                  DropdownMenuItem(value: 'E-Walet', child: Text('E-Walet')),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    selectedPaymentMethod = value;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Pilih metode pembayaran';
+                  }
+                  return null;
+                },
+              ),
+
               const SizedBox(height: 32),
               Row(
                 mainAxisAlignment: .spaceBetween,
@@ -80,8 +113,35 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     return;
                   }
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Pesanan berhasil dibuat')),
+                  final order = Order(
+                    id: DateTime.now().microsecondsSinceEpoch.toString(),
+                    items: List.from(CartManager.items.value),
+                    total: total,
+                    address: addressController.text.trim(),
+                    paymentMethod: selectedPaymentMethod!,
+                    createdAt: DateTime.now(),
+                  );
+
+                  OrderManager.add(order);
+                  CartManager.clear();
+
+                  showDialog(
+                    context: context,
+                    builder: (dialogContext) {
+                      return AlertDialog(
+                        title: const Text('Pesanan Berhasil'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              CartManager.clear();
+                              Navigator.pop(dialogContext);
+                              Navigator.pop(context);
+                            },
+                            child: const Text('Selesai'),
+                          ),
+                        ],
+                      );
+                    },
                   );
                 },
               ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:new1/widgets/app_button.dart';
-
+import '../utils/currency_formatter.dart';
 import '../models/product.dart';
 import '../services/cart_manager.dart';
 
@@ -35,7 +35,7 @@ class ProductDetailPage extends StatelessWidget {
 
             const SizedBox(height: 16),
             Text(
-              'Rp ${product.price.toStringAsFixed(0)}',
+              CurrencyFormatter.format(product.price),
               style: const TextStyle(fontSize: 22, fontWeight: .bold),
             ),
             const SizedBox(height: 24),
@@ -49,11 +49,15 @@ class ProductDetailPage extends StatelessWidget {
               width: double.infinity,
               height: 52,
               child: AppButton(
-                onPressed: () {
-                  CartManager.add(product);
+                onPressed: () async {
+                  await CartManager.add(product);
+                  if (!context.mounted) {
+                    return;
+                  }
 
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
+                      duration: Duration(seconds: 1),
                       content: Text('${product.name} ditambahkan ke keranjang'),
                     ),
                   );

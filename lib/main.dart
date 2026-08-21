@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'pages/login_page.dart';
-
+import 'pages/favorite_page.dart';
 import 'pages/home_page.dart';
 import 'pages/register_page.dart';
+import 'pages/cart_page.dart';
+import 'pages/checkout_page.dart';
+import 'pages/order_detail_page.dart';
+import 'pages/order_history_page.dart';
+import 'pages/product_detail_page.dart';
+import 'pages/profile_page.dart';
+import 'models/product.dart';
+import 'models/order.dart';
 
 void main() {
   runApp(const MyApp());
@@ -26,6 +34,34 @@ class MyApp extends StatelessWidget {
         '/': (context) => const LoginPage(),
         '/home': (context) => const HomePage(),
         '/register': (context) => const RegisterPage(),
+        '/cart': (context) => const CartPage(),
+        '/checkout': (context) => const CheckoutPage(),
+        '/orders': (context) => const OrderHistoryPage(),
+        '/favorites': (context) => const FavoritePage(),
+        '/profile': (context) => const ProfilePage(),
+      },
+
+      onGenerateRoute: (settings) {
+        if (settings.name == '/product-detail') {
+          final product = settings.arguments as Product;
+
+          return MaterialPageRoute(
+            builder: (context) {
+              return ProductDetailPage(product: product);
+            },
+          );
+        }
+        if (settings.name == '/order-detail') {
+          final order = settings.arguments as Order;
+
+          return MaterialPageRoute(
+            builder: (context) {
+              return OrderDetailPage(order: order);
+            },
+          );
+        }
+
+        return null;
       },
     );
   }
