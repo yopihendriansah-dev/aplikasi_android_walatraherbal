@@ -1,8 +1,11 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import '../models/order.dart';
+import '../models/product.dart';
 
 class LocalStorage {
   static const favoriteIdsKey = 'favorite_product_ids';
+  static const orderKey = 'orders';
 
   final SharedPreferencesAsync prefreences = SharedPreferencesAsync();
 
@@ -40,5 +43,27 @@ class LocalStorage {
 
   Future<void> clearCartItems() async {
     await prefreences.remove(cartItemsKey);
+  }
+
+  Future<void> saveOrders(List<Order> ordres) async {
+    final jsonData = jsonEncode(ordres.map((order) => order.toJson()).toList());
+
+    await prefreences.setString(orderKey, jsonData);
+  }
+
+  Future<List<Order>> loadOrder(List<Product> products) async {
+    final jsonData = await prefreences.getString(orderKey);
+    if (jsonData == null) {
+      return [];
+    }
+
+    final decodedData = jsonDecode(jsonData) as List<dynamic>;
+    return decodedData.map((item) {
+      return Order.fromJson(item as Map<String, dynamic>, products);
+    }).toList();
+  }
+
+  Future<void> clearOrders() async {
+    await prefreences.remove(orderKey);
   }
 }

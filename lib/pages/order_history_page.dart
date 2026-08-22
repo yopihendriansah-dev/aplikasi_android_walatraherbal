@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/order_manager.dart';
 import '../utils/currency_formatter.dart';
+import 'package:intl/intl.dart';
 
 class OrderHistoryPage extends StatelessWidget {
   const OrderHistoryPage({super.key});
@@ -22,6 +23,10 @@ class OrderHistoryPage extends StatelessWidget {
             itemCount: orders.length,
             itemBuilder: (context, index) {
               final order = orders[index];
+              final formattedDate = DateFormat(
+                'dd MM yyyy, HH;mm',
+                'id_ID',
+              ).format(order.createdAt);
 
               return Card(
                 margin: const EdgeInsets.only(bottom: 16),
@@ -45,6 +50,18 @@ class OrderHistoryPage extends StatelessWidget {
                             style: const TextStyle(fontWeight: .bold),
                           ),
                           const SizedBox(height: 8),
+                          Text(
+                            'Dibuat: $formattedDate',
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+
+                          const SizedBox(height: 8),
+                          Chip(
+                            avatar: const Icon(Icons.access_time, size: 18),
+                            label: Text(order.status),
+                          ),
+                          const SizedBox(height: 8),
+
                           Text('${order.items.length} jenis produk'),
 
                           const SizedBox(height: 8),
@@ -56,7 +73,7 @@ class OrderHistoryPage extends StatelessWidget {
                           Text(
                             CurrencyFormatter.format(order.total),
                             style: TextStyle(
-                              fontSize: 8,
+                              fontSize: 18,
                               fontWeight: .bold,
                               color: Theme.of(context).colorScheme.primary,
                             ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/app_button.dart';
 import '../services/cart_manager.dart';
 import '../utils/currency_formatter.dart';
+import '../widgets/product_image.dart';
 
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
@@ -40,9 +41,7 @@ class CartPage extends StatelessWidget {
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
                       child: ListTile(
-                        leading: const CircleAvatar(
-                          child: Icon(Icons.shopping_bag_outlined),
-                        ),
+                        leading: ProductImage(imageUrl: product.imageUrl),
                         title: Text(product.name),
                         subtitle: Column(
                           crossAxisAlignment: .start,

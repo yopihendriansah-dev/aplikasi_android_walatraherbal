@@ -11,8 +11,13 @@ import 'pages/product_detail_page.dart';
 import 'pages/profile_page.dart';
 import 'models/product.dart';
 import 'models/order.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await initializeDateFormatting('id_ID');
+
   runApp(const MyApp());
 }
 

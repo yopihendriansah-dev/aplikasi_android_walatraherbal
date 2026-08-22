@@ -3,6 +3,8 @@ import 'package:new1/widgets/app_button.dart';
 import '../utils/currency_formatter.dart';
 import '../models/product.dart';
 import '../services/cart_manager.dart';
+import '../widgets/product_image.dart';
+import '../services/favorites_manager.dart';
 
 class ProductDetailPage extends StatelessWidget {
   final Product product;
@@ -11,16 +13,39 @@ class ProductDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Detail Produk')),
+      appBar: AppBar(
+        title: const Text('Detail Produk'),
+        actions: [
+          ValueListenableBuilder(
+            valueListenable: FavoritesManager.items,
+            builder: (context, favorites, child) {
+              final isFavorite = FavoritesManager.isFavorite(product);
+
+              return IconButton(
+                onPressed: () async {
+                  await FavoritesManager.toggle(product);
+                },
+                icon: Icon(
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: isFavorite ? Colors.red : null,
+                ),
+              );
+            },
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/cart');
+            },
+            icon: Icon(Icons.shopping_bag_outlined),
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsetsGeometry.all(24),
         child: Column(
           crossAxisAlignment: .start,
           children: [
-            const CircleAvatar(
-              radius: 48,
-              child: Icon(Icons.shopping_bag_outlined, size: 48),
-            ),
+            ProductImage(imageUrl: product.imageUrl, size: 160),
             const SizedBox(height: 24),
             Text(
               product.name,

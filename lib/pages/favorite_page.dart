@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../services/favorites_manager.dart';
-import '../utils/currency_formatter.dart';
+
+import '../widgets/product_card.dart';
 
 class FavoritePage extends StatelessWidget {
   const FavoritePage({super.key});
@@ -27,40 +28,19 @@ class FavoritePage extends StatelessWidget {
             itemCount: favorites.length,
             itemBuilder: (context, index) {
               final product = favorites[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  onTap: () {
-                    Navigator.pushNamed(
-                      context,
-                      '/product-detail',
-                      arguments: product,
-                    );
-                  },
-                  leading: const CircleAvatar(
-                    child: Icon(Icons.shopping_bag_outlined),
-                  ),
-                  title: Text(
-                    product.name,
-                    style: const TextStyle(fontWeight: .bold),
-                  ),
-                  subtitle: Text(product.category),
-                  trailing: Row(
-                    mainAxisSize: .min,
-                    children: [
-                      Text(
-                        CurrencyFormatter.format(product.price),
-                        style: TextStyle(fontWeight: .bold),
-                      ),
-                      IconButton(
-                        onPressed: () async {
-                          FavoritesManager.toggle(product);
-                        },
-                        icon: const Icon(Icons.favorite, color: Colors.red),
-                      ),
-                    ],
-                  ),
-                ),
+              return ProductCard(
+                product: product,
+                isFavorite: true,
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/product-detail',
+                    arguments: product,
+                  );
+                },
+                onFavoritePressed: () async {
+                  await FavoritesManager.toggle(product);
+                },
               );
             },
           );

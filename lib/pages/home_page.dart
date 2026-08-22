@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:new1/services/order_manager.dart';
 import 'package:new1/widgets/app_text_field.dart';
 import '../models/product.dart';
 import '../services/favorites_manager.dart';
-import '../utils/currency_formatter.dart';
+import '../services/cart_manager.dart';
+import '../widgets/product_card.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -44,6 +46,11 @@ class _HomePageState extends State<HomePage> {
       category: 'Sepatu',
       price: 399000,
       description: 'Sepatu kasualuntuk aktivitas sehari-hari',
+      imageUrl:
+          'https://www.happystore.id/_next/image?url=https%3A%2F%2Fcf.shopee.co.id%2Ffile%2Fid-11134207-7rasb-m13kkvtth7vs38&w=1200&q=75',
+      rating: 4.8,
+      reviewCount: 120,
+      soldCount: 20,
     ),
     Product(
       id: 'p002',
@@ -51,6 +58,9 @@ class _HomePageState extends State<HomePage> {
       category: 'Tas',
       price: 560000,
       description: 'Tas aktivitas sehari-hari',
+      rating: 4.8,
+      reviewCount: 122,
+      soldCount: 28,
     ),
     Product(
       id: 'p003',
@@ -58,17 +68,25 @@ class _HomePageState extends State<HomePage> {
       category: 'Pakaian',
       price: 399000,
       description: 'Jaket untuk  aktivitas sehari-hari',
+      rating: 4.0,
+      reviewCount: 120,
+      soldCount: 40,
     ),
   ];
 
   @override
   void initState() {
     super.initState();
-    loadFavorites();
+    loadSavedData();
   }
 
-  Future<void> loadFavorites() async {
-    await FavoritesManager.load(products);
+  Future<void> loadSavedData() async {
+    await Future.wait([
+      FavoritesManager.load(products),
+      CartManager.load(products),
+      OrderManager.load(products),
+    ]);
+
     if (!mounted) {
       return;
     }
@@ -173,60 +191,47 @@ class _HomePageState extends State<HomePage> {
                       style: TextStyle(fontSize: 18),
                     ),
                   )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: filteredProducts.length,
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      final columnCount = constraints.maxWidth >= 900
+                          ? 4
+                          : constraints.maxWidth >= 900
+                          ? 3
+                          : 2;
+                      return GridView.builder(
+                        padding: const EdgeInsets.all(12),
 
-                    itemBuilder: (context, index) {
-                      final product = filteredProducts[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: ListTile(
-                          onTap: () {
-                            Navigator.pushNamed(
-                              context,
-                              '/product-detail',
-                              arguments: product,
-                            );
-                          },
-                          leading: const CircleAvatar(
-                            child: Icon(Icons.shopping_bag_outlined),
-                          ),
-                          title: Text(
-                            product.name,
-                            style: const TextStyle(fontWeight: .bold),
-                          ),
-                          subtitle: Text(product.category),
-                          trailing: Row(
-                            mainAxisSize: .min,
-                            children: [
-                              Text(
-                                CurrencyFormatter.format(product.price),
-                                style: const TextStyle(fontWeight: .bold),
-                              ),
-
-                              ValueListenableBuilder(
-                                valueListenable: FavoritesManager.items,
-                                builder: (context, favorites, child) {
-                                  final isFavorite =
-                                      FavoritesManager.isFavorite(product);
-
-                                  return IconButton(
-                                    onPressed: () async {
-                                      FavoritesManager.toggle(product);
-                                    },
-                                    icon: Icon(
-                                      isFavorite
-                                          ? Icons.favorite
-                                          : Icons.favorite_border,
-                                      color: isFavorite ? Colors.red : null,
-                                    ),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: columnCount,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.60,
+                        ),
+                        itemCount: filteredProducts.length,
+                        itemBuilder: (context, index) {
+                          final product = filteredProducts[index];
+                          return ValueListenableBuilder(
+                            valueListenable: FavoritesManager.items,
+                            builder: (context, value, child) {
+                              return ProductCard(
+                                product: product,
+                                isFavorite: FavoritesManager.isFavorite(
+                                  product,
+                                ),
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/product-detail',
+                                    arguments: product,
                                   );
                                 },
-                              ),
-                            ],
-                          ),
-                        ),
+                                onFavoritePressed: () async {
+                                  await FavoritesManager.toggle(product);
+                                },
+                              );
+                            },
+                          );
+                        },
                       );
                     },
                   ),

@@ -108,7 +108,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
                 icon: Icons.check_circle_outline,
 
-                onPressed: () {
+                onPressed: () async {
                   if (!formKey.currentState!.validate()) {
                     return;
                   }
@@ -122,9 +122,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     createdAt: DateTime.now(),
                   );
 
-                  OrderManager.add(order);
-                  CartManager.clear();
+                  await OrderManager.add(order);
+                  await CartManager.clear();
 
+                  if (!context.mounted) {
+                    return;
+                  }
                   showDialog(
                     context: context,
                     builder: (dialogContext) {

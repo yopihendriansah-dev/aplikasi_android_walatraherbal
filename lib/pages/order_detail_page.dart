@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import '../widgets/product_image.dart';
 import '../models/order.dart';
 import '../utils/currency_formatter.dart';
 
@@ -14,6 +14,12 @@ class OrderDetailPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          Chip(
+            avatar: const Icon(Icons.access_time, size: 18),
+            label: Text(order.status),
+          ),
+
+          const SizedBox(height: 16),
           const Text(
             'Daftar Produk',
             style: TextStyle(fontSize: 20, fontWeight: .bold),
@@ -23,9 +29,7 @@ class OrderDetailPage extends StatelessWidget {
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
               child: ListTile(
-                leading: const CircleAvatar(
-                  child: Icon(Icons.shopping_bag_outlined),
-                ),
+                leading: ProductImage(imageUrl: item.product.imageUrl),
                 title: Text(
                   '${item.quantity} x '
                   '${CurrencyFormatter.format(item.product.price)}',
