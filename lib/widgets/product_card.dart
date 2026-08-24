@@ -32,7 +32,7 @@ class ProductCard extends StatelessWidget {
                   aspectRatio: 1,
                   child: ProductImage(
                     imageUrl: product.imageUrl,
-                    widht: double.infinity,
+                    width: double.infinity,
                     height: double.infinity,
                   ),
                 ),
@@ -81,7 +81,10 @@ class ProductCard extends StatelessWidget {
                       const Icon(Icons.star, size: 16, color: Colors.amber),
                       const SizedBox(width: 4),
                       Text(
-                        '${product.rating} (${product.reviewCount}) - ${product.soldCount} Terjual',
+                        '${product.rating} (${product.reviewCount})'
+                        '- ${product.soldCount} Terjual',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 12,
                           color: Colors.grey,

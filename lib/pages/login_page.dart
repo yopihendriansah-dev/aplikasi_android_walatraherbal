@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/app_button.dart';
+import '../models/user.dart';
+import '../services/auth_manager.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -117,15 +119,23 @@ class _LoginPageState extends State<LoginPage> {
                       return;
                     }
 
-                    setState(() {
-                      isLoading = true;
-                    });
-
                     await Future.delayed(const Duration(seconds: 2));
                     if (!context.mounted) return;
 
                     setState(() {
                       isLoading = false;
+                    });
+
+                    final user = User(
+                      id: DateTime.now().microsecondsSinceEpoch.toString(),
+                      name: emailController.text.trim().split('@').first,
+                      email: emailController.text.trim(),
+                    );
+
+                    AuthManager.login(user);
+
+                    setState(() {
+                      isLoading = true;
                     });
 
                     Navigator.pushReplacementNamed(context, '/home');

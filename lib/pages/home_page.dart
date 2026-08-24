@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:new1/services/order_manager.dart';
-import 'package:new1/widgets/app_text_field.dart';
+
 import '../models/product.dart';
 import '../services/favorites_manager.dart';
 import '../services/cart_manager.dart';
 import '../widgets/product_card.dart';
+import '../widgets/catalog_toolbar.dart';
+import '../data/product_repository.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,65 +21,25 @@ class _HomePageState extends State<HomePage> {
   String sortOption = 'Default';
   String selectedCategory = 'Semua';
 
-  List<Product> get filteredProducts {
-    final result = products.where((product) {
-      final matchesSearch = product.name.toLowerCase().contains(
-        searchQuery.toLowerCase(),
-      );
-      final matchesCategory =
-          selectedCategory == 'Semua' || product.category == selectedCategory;
-      return matchesSearch && matchesCategory;
-    }).toList();
+  final scrollController = ScrollController();
+  final List<Product> loadedProducts = [];
 
-    if (sortOption == 'Harga Terendah') {
-      result.sort((a, b) => a.price.compareTo(b.price));
-    }
+  int currentPage = 1;
+  bool isInitialLoading = true;
+  bool isLoadingMore = false;
+  bool hasMore = true;
+  static const pageSize = 20;
 
-    if (sortOption == 'Harga Tertinggi') {
-      result.sort((a, b) => b.price.compareTo(a.price));
-    }
-    return result;
-  }
+  List<Product> get filteredProducts => loadedProducts;
 
-  final List<Product> products = const [
-    Product(
-      id: 'p001',
-      name: 'Sneakers Urban',
-      category: 'Sepatu',
-      price: 399000,
-      description: 'Sepatu kasualuntuk aktivitas sehari-hari',
-      imageUrl:
-          'https://www.happystore.id/_next/image?url=https%3A%2F%2Fcf.shopee.co.id%2Ffile%2Fid-11134207-7rasb-m13kkvtth7vs38&w=1200&q=75',
-      rating: 4.8,
-      reviewCount: 120,
-      soldCount: 20,
-    ),
-    Product(
-      id: 'p002',
-      name: 'Tas Selempang',
-      category: 'Tas',
-      price: 560000,
-      description: 'Tas aktivitas sehari-hari',
-      rating: 4.8,
-      reviewCount: 122,
-      soldCount: 28,
-    ),
-    Product(
-      id: 'p003',
-      name: 'Jaket Denimi',
-      category: 'Pakaian',
-      price: 399000,
-      description: 'Jaket untuk  aktivitas sehari-hari',
-      rating: 4.0,
-      reviewCount: 120,
-      soldCount: 40,
-    ),
-  ];
+  final products = ProductRepository.products;
 
   @override
   void initState() {
     super.initState();
+    scrollController.addListener(onScroll);
     loadSavedData();
+    loadFirstPage();
   }
 
   Future<void> loadSavedData() async {
@@ -94,10 +56,185 @@ class _HomePageState extends State<HomePage> {
     setState(() {});
   }
 
+  void onScroll() {
+    if (scrollController.position.pixels >=
+        scrollController.position.maxScrollExtent - 300) {
+      loadNextPage();
+    }
+  }
+
+  Future<void> loadFirstPage() async {
+    final firstPage = await ProductRepository.fetchProducts(
+      page: 1,
+      limit: pageSize,
+      query: searchQuery,
+      category: selectedCategory,
+      sortOption: sortOption,
+    );
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      loadedProducts
+        ..clear()
+        ..addAll(firstPage);
+
+      currentPage = 1;
+      hasMore = firstPage.length == pageSize;
+      isInitialLoading = false;
+    });
+  }
+
+  Future<void> loadNextPage() async {
+    if (isLoadingMore || !hasMore) {
+      return;
+    }
+
+    setState(() {
+      isLoadingMore = true;
+    });
+
+    final nextPage = currentPage + 1;
+    final newProducts = await ProductRepository.fetchProducts(
+      page: nextPage,
+      limit: pageSize,
+      query: searchQuery,
+      category: selectedCategory,
+      sortOption: sortOption,
+    );
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      loadedProducts.addAll(newProducts);
+      currentPage = nextPage;
+      isLoadingMore = false;
+      hasMore = newProducts.length == pageSize;
+    });
+  }
+
   @override
   void dispose() {
+    scrollController.dispose();
     searchController.dispose();
     super.dispose();
+  }
+
+  void showFilterSheet() {
+    // final categories = [
+    //   'Semua',
+    //   ...products.map((product) => product.category).toSet(),
+    // ];
+
+    showModalBottomSheet(
+      context: context,
+
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: .vertical(top: .circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: SizedBox(
+            width: double.infinity,
+            height: 300,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: .start,
+                children: [
+                  const Text(
+                    'Filter dan Urutkan',
+                    style: TextStyle(fontSize: 20, fontWeight: .bold),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Urutkan berdasarkan',
+                    style: TextStyle(fontWeight: .bold),
+                  ),
+                  RadioGroup<String>(
+                    groupValue: sortOption,
+                    onChanged: (value) {
+                      if (value == null) {
+                        return;
+                      }
+
+                      setState(() {
+                        sortOption = value;
+                      });
+
+                      Navigator.pop(context);
+                      resetProducts();
+                    },
+                    child: Column(
+                      children: [
+                        const RadioListTile<String>(
+                          contentPadding: .zero,
+                          title: Text('Default'),
+                          value: 'Default',
+                        ),
+                        const RadioListTile<String>(
+                          contentPadding: .zero,
+                          title: Text('Harga Terendah'),
+                          value: 'Harga Terendah',
+                        ),
+                        const RadioListTile<String>(
+                          contentPadding: .zero,
+                          title: Text('Harga Tertinggi'),
+                          value: 'Harga Tertinggi',
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  List<String> get categories {
+    return ['Semua', ...products.map((product) => product.category).toSet()];
+  }
+
+  Future<void> resetProducts() async {
+    if (scrollController.hasClients) {
+      await scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      loadedProducts.clear();
+      currentPage = 1;
+      hasMore = true;
+      isInitialLoading = true;
+    });
+    final firstPage = await ProductRepository.fetchProducts(
+      page: 1,
+      limit: pageSize,
+      query: searchQuery,
+      category: selectedCategory,
+      sortOption: sortOption,
+    );
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      loadedProducts.addAll(firstPage);
+      hasMore = firstPage.length == pageSize;
+      isInitialLoading = false;
+    });
   }
 
   @override
@@ -142,49 +279,48 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: AppTextField(
-              controller: searchController,
-              hintText: 'Cari produk',
-              prefixIcon: Icons.search,
-              onChanged: (value) {
-                setState(() {
-                  searchQuery = value;
-                });
-              },
-            ),
+          CatalogToolbar(
+            searchController: searchController,
+            onSearchChanged: (value) {
+              setState(() {
+                searchQuery = value;
+              });
+              resetProducts();
+            },
+            onFilterPressed: showFilterSheet,
           ),
 
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: DropdownButtonFormField<String>(
-              initialValue: sortOption,
-              decoration: InputDecoration(
-                labelText: 'Urutkan',
-                prefixIcon: const Icon(Icons.sort),
-                border: OutlineInputBorder(borderRadius: .circular(12)),
-              ),
-              items: const [
-                DropdownMenuItem(value: 'Default', child: Text('Default')),
-                DropdownMenuItem(
-                  value: 'Harga Terendah',
-                  child: Text('Harga Terendah'),
-                ),
-                DropdownMenuItem(
-                  value: 'Harga Tertinggi',
-                  child: Text('Harga Tertinggi'),
-                ),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  sortOption = value ?? 'Default';
-                });
+          SizedBox(
+            height: 44,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              scrollDirection: Axis.horizontal,
+
+              itemBuilder: (context, index) {
+                final category = categories[index];
+                return ChoiceChip(
+                  label: Text(category),
+                  selected: selectedCategory == category,
+                  onSelected: (selected) {
+                    setState(() {
+                      selectedCategory = category;
+                    });
+                    resetProducts();
+                  },
+                );
               },
+              separatorBuilder: (context, index) {
+                return const SizedBox(width: 8);
+              },
+              itemCount: categories.length,
             ),
           ),
+          const SizedBox(height: 8),
+
           Expanded(
-            child: filteredProducts.isEmpty
+            child: isInitialLoading
+                ? const Center(child: CircularProgressIndicator())
+                : filteredProducts.isEmpty
                 ? const Center(
                     child: Text(
                       'Produk tidak ditemukan',
@@ -195,20 +331,33 @@ class _HomePageState extends State<HomePage> {
                     builder: (context, constraints) {
                       final columnCount = constraints.maxWidth >= 900
                           ? 4
-                          : constraints.maxWidth >= 900
+                          : constraints.maxWidth >= 600
                           ? 3
                           : 2;
                       return GridView.builder(
+                        controller: scrollController,
                         padding: const EdgeInsets.all(12),
 
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: columnCount,
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
-                          childAspectRatio: 0.60,
+                          childAspectRatio: 0.55,
                         ),
-                        itemCount: filteredProducts.length,
+                        itemCount:
+                            filteredProducts.length + (isLoadingMore ? 1 : 0),
                         itemBuilder: (context, index) {
+                          if (index >= filteredProducts.length) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              ),
+                            );
+                          }
+
                           final product = filteredProducts[index];
                           return ValueListenableBuilder(
                             valueListenable: FavoritesManager.items,

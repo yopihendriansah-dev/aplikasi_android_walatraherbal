@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'pages/login_page.dart';
 import 'pages/favorite_page.dart';
-import 'pages/home_page.dart';
+
 import 'pages/register_page.dart';
 import 'pages/cart_page.dart';
 import 'pages/checkout_page.dart';
@@ -12,6 +12,7 @@ import 'pages/profile_page.dart';
 import 'models/product.dart';
 import 'models/order.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'pages/main_navigation_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,7 +38,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const LoginPage(),
-        '/home': (context) => const HomePage(),
+        '/home': (context) => const MainNavigationPage(),
         '/register': (context) => const RegisterPage(),
         '/cart': (context) => const CartPage(),
         '/checkout': (context) => const CheckoutPage(),
