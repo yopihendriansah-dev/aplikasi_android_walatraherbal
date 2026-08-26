@@ -80,14 +80,16 @@ class ProductCard extends StatelessWidget {
                     children: [
                       const Icon(Icons.star, size: 16, color: Colors.amber),
                       const SizedBox(width: 4),
-                      Text(
-                        '${product.rating} (${product.reviewCount})'
-                        '- ${product.soldCount} Terjual',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
+                      Expanded(
+                        child: Text(
+                          '${product.rating} (${product.reviewCount})'
+                          '- ${product.soldCount} Terjual',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
                         ),
                       ),
                     ],

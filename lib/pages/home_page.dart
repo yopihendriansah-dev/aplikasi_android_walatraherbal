@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:new1/services/order_manager.dart';
-
+import 'dart:async';
 import '../models/product.dart';
 import '../services/favorites_manager.dart';
 import '../services/cart_manager.dart';
@@ -29,6 +29,8 @@ class _HomePageState extends State<HomePage> {
   bool isLoadingMore = false;
   bool hasMore = true;
   static const pageSize = 20;
+
+  Timer? searchDebounce;
 
   List<Product> get filteredProducts => loadedProducts;
 
@@ -117,6 +119,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void dispose() {
+    searchDebounce?.cancel();
     scrollController.dispose();
     searchController.dispose();
     super.dispose();
@@ -218,6 +221,7 @@ class _HomePageState extends State<HomePage> {
       currentPage = 1;
       hasMore = true;
       isInitialLoading = true;
+      isLoadingMore = false;
     });
     final firstPage = await ProductRepository.fetchProducts(
       page: 1,
@@ -285,9 +289,23 @@ class _HomePageState extends State<HomePage> {
               setState(() {
                 searchQuery = value;
               });
-              resetProducts();
+
+              searchDebounce?.cancel();
+              searchDebounce = Timer(const Duration(milliseconds: 400), () {
+                resetProducts();
+              });
             },
             onFilterPressed: showFilterSheet,
+            onClearSearch: () {
+              searchController.clear();
+
+              setState(() {
+                searchQuery = '';
+              });
+
+              searchDebounce?.cancel();
+              resetProducts();
+            },
           ),
 
           SizedBox(
@@ -316,14 +334,26 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           const SizedBox(height: 8),
-
+          if (!isInitialLoading)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Align(
+                alignment: .centerLeft,
+                child: Text(
+                  'Menampilkan ${filteredProducts.length} produk',
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                ),
+              ),
+            ),
           Expanded(
             child: isInitialLoading
                 ? const Center(child: CircularProgressIndicator())
                 : filteredProducts.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text(
-                      'Produk tidak ditemukan',
+                      searchQuery.trim().isEmpty
+                          ? 'Produk tidak ditemukan'
+                          : 'Produk "$searchQuery" tidak ditemukan',
                       style: TextStyle(fontSize: 18),
                     ),
                   )

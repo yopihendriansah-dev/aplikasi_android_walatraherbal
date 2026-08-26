@@ -1340,8 +1340,6 @@ class ProductRepository {
       filtered.sort((a, b) => b.price.compareTo(a.price));
     }
 
-    // /////////////////////
-
     final startIndex = (page - 1) * limit;
 
     if (startIndex >= filtered.length) {

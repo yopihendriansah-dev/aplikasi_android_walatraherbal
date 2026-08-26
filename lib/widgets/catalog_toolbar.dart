@@ -6,12 +6,14 @@ class CatalogToolbar extends StatelessWidget {
   final TextEditingController searchController;
   final ValueChanged<String>? onSearchChanged;
   final VoidCallback onFilterPressed;
+  final VoidCallback? onClearSearch;
 
   const CatalogToolbar({
     super.key,
     required this.searchController,
     required this.onSearchChanged,
     required this.onFilterPressed,
+    this.onClearSearch,
   });
 
   @override
@@ -26,6 +28,13 @@ class CatalogToolbar extends StatelessWidget {
               hintText: 'Cari produk',
               prefixIcon: Icons.search,
               onChanged: onSearchChanged,
+              suffixIcon: searchController.text.isEmpty
+                  ? null
+                  : IconButton(
+                      onPressed: onClearSearch,
+                      icon: const Icon(Icons.clear),
+                      tooltip: 'Hapus pencarian',
+                    ),
             ),
           ),
           const SizedBox(width: 8),
