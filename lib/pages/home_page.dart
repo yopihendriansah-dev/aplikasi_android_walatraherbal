@@ -7,6 +7,7 @@ import '../services/cart_manager.dart';
 import '../widgets/product_card.dart';
 import '../widgets/catalog_toolbar.dart';
 import '../data/product_repository.dart';
+import '../widgets/app_button.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -28,6 +29,8 @@ class _HomePageState extends State<HomePage> {
   bool isInitialLoading = true;
   bool isLoadingMore = false;
   bool hasMore = true;
+  String? errorMessage;
+  String? loadMoreError;
   static const pageSize = 20;
 
   Timer? searchDebounce;
@@ -66,26 +69,37 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> loadFirstPage() async {
-    final firstPage = await ProductRepository.fetchProducts(
-      page: 1,
-      limit: pageSize,
-      query: searchQuery,
-      category: selectedCategory,
-      sortOption: sortOption,
-    );
-    if (!mounted) {
-      return;
+    try {
+      final firstPage = await ProductRepository.fetchProducts(
+        page: 1,
+        limit: pageSize,
+        query: searchQuery,
+        category: selectedCategory,
+        sortOption: sortOption,
+      );
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        loadedProducts
+          ..clear()
+          ..addAll(firstPage);
+
+        currentPage = 1;
+        hasMore = firstPage.length == pageSize;
+        isInitialLoading = false;
+        errorMessage = null;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        isInitialLoading = false;
+        errorMessage = 'Gagal memuat produk';
+      });
     }
-
-    setState(() {
-      loadedProducts
-        ..clear()
-        ..addAll(firstPage);
-
-      currentPage = 1;
-      hasMore = firstPage.length == pageSize;
-      isInitialLoading = false;
-    });
   }
 
   Future<void> loadNextPage() async {
@@ -95,26 +109,38 @@ class _HomePageState extends State<HomePage> {
 
     setState(() {
       isLoadingMore = true;
+      loadMoreError = null;
     });
 
     final nextPage = currentPage + 1;
-    final newProducts = await ProductRepository.fetchProducts(
-      page: nextPage,
-      limit: pageSize,
-      query: searchQuery,
-      category: selectedCategory,
-      sortOption: sortOption,
-    );
-    if (!mounted) {
-      return;
-    }
 
-    setState(() {
-      loadedProducts.addAll(newProducts);
-      currentPage = nextPage;
-      isLoadingMore = false;
-      hasMore = newProducts.length == pageSize;
-    });
+    try {
+      final newProducts = await ProductRepository.fetchProducts(
+        page: nextPage,
+        limit: pageSize,
+        query: searchQuery,
+        category: selectedCategory,
+        sortOption: sortOption,
+      );
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        loadedProducts.addAll(newProducts);
+        currentPage = nextPage;
+        isLoadingMore = false;
+        hasMore = newProducts.length == pageSize;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        isLoadingMore = false;
+        loadMoreError = 'Gagal memuat produk berikutnya';
+      });
+    }
   }
 
   @override
@@ -222,23 +248,10 @@ class _HomePageState extends State<HomePage> {
       hasMore = true;
       isInitialLoading = true;
       isLoadingMore = false;
+      errorMessage = null;
+      loadMoreError = null;
     });
-    final firstPage = await ProductRepository.fetchProducts(
-      page: 1,
-      limit: pageSize,
-      query: searchQuery,
-      category: selectedCategory,
-      sortOption: sortOption,
-    );
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      loadedProducts.addAll(firstPage);
-      hasMore = firstPage.length == pageSize;
-      isInitialLoading = false;
-    });
+    await loadFirstPage();
   }
 
   @override
@@ -348,13 +361,42 @@ class _HomePageState extends State<HomePage> {
           Expanded(
             child: isInitialLoading
                 ? const Center(child: CircularProgressIndicator())
+                : errorMessage != null
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: .min,
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            size: 56,
+                            color: Colors.redAccent,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            errorMessage!,
+                            textAlign: .center,
+                            style: const TextStyle(fontSize: 18),
+                          ),
+                          const SizedBox(height: 20),
+                          AppButton(
+                            text: 'Coba lagi',
+                            onPressed: loadFirstPage,
+                            icon: Icons.refresh,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
                 : filteredProducts.isEmpty
                 ? Center(
                     child: Text(
                       searchQuery.trim().isEmpty
                           ? 'Produk tidak ditemukan'
                           : 'Produk "$searchQuery" tidak ditemukan',
-                      style: TextStyle(fontSize: 18),
+                      textAlign: .center,
+                      style: const TextStyle(fontSize: 18),
                     ),
                   )
                 : LayoutBuilder(
@@ -375,15 +417,24 @@ class _HomePageState extends State<HomePage> {
                           childAspectRatio: 0.55,
                         ),
                         itemCount:
-                            filteredProducts.length + (isLoadingMore ? 1 : 0),
+                            filteredProducts.length +
+                            ((isLoadingMore || loadMoreError != null) ? 1 : 0),
                         itemBuilder: (context, index) {
                           if (index >= filteredProducts.length) {
-                            return const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Center(
+                            if (isLoadingMore) {
+                              return const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16),
                                   child: CircularProgressIndicator(),
                                 ),
+                              );
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: AppButton(
+                                text: 'Coba lagi',
+                                icon: Icons.refresh,
+                                onPressed: loadNextPage,
                               ),
                             );
                           }

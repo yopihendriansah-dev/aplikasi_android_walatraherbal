@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:new1/pages/edit_profile_page.dart';
 import 'pages/login_page.dart';
 import 'pages/favorite_page.dart';
 
@@ -45,6 +46,7 @@ class MyApp extends StatelessWidget {
         '/orders': (context) => const OrderHistoryPage(),
         '/favorites': (context) => const FavoritePage(),
         '/profile': (context) => const ProfilePage(),
+        '/edit-profile': (context) => const EditProfilePage(),
       },
 
       onGenerateRoute: (settings) {
