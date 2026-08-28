@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:new1/pages/edit_profile_page.dart';
+import 'package:new1/services/auth_manager.dart';
+import 'pages/address_page.dart';
 import 'pages/login_page.dart';
 import 'pages/favorite_page.dart';
-
+import 'services/address_manager.dart';
 import 'pages/register_page.dart';
 import 'pages/cart_page.dart';
 import 'pages/checkout_page.dart';
@@ -19,7 +21,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await initializeDateFormatting('id_ID');
-
+  await AuthManager.restoreSession();
+  await AddressManager.load();
   runApp(const MyApp());
 }
 
@@ -36,7 +39,7 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFFF9F7FF),
       ),
 
-      initialRoute: '/',
+      initialRoute: AuthManager.isLoggedIn ? '/home' : '/',
       routes: {
         '/': (context) => const LoginPage(),
         '/home': (context) => const MainNavigationPage(),
@@ -47,6 +50,8 @@ class MyApp extends StatelessWidget {
         '/favorites': (context) => const FavoritePage(),
         '/profile': (context) => const ProfilePage(),
         '/edit-profile': (context) => const EditProfilePage(),
+        '/addresses': (context) => const Addresspage(),
+        '/add-address': (context) => const AddAddressPage(),
       },
 
       onGenerateRoute: (settings) {

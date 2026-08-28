@@ -2,10 +2,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../models/order.dart';
 import '../models/product.dart';
+import '../models/user.dart';
+import '../models/address.dart';
 
 class LocalStorage {
   static const favoriteIdsKey = 'favorite_product_ids';
   static const orderKey = 'orders';
+  static const userKey = 'current_user';
+  static const addressKey = 'addresses';
 
   final SharedPreferencesAsync prefreences = SharedPreferencesAsync();
 
@@ -65,5 +69,50 @@ class LocalStorage {
 
   Future<void> clearOrders() async {
     await prefreences.remove(orderKey);
+  }
+
+  Future<void> saveUser(User user) async {
+    final jsonData = jsonEncode(user.toJson());
+
+    await prefreences.setString(userKey, jsonData);
+  }
+
+  Future<User?> loadUser() async {
+    final jsonData = await prefreences.getString(userKey);
+
+    if (jsonData == null) {
+      return null;
+    }
+
+    final decodedData = jsonDecode(jsonData) as Map<String, dynamic>;
+    return User.fromJson(decodedData);
+  }
+
+  Future<void> clearUser() async {
+    await prefreences.remove(userKey);
+  }
+
+  Future<void> saveAddresses(List<Address> addresses) async {
+    final jsonData = jsonEncode(
+      addresses.map((address) => address.toJson()).toList(),
+    );
+    await prefreences.setString(addressKey, jsonData);
+  }
+
+  Future<List<Address>> loadAddresses() async {
+    final jsonData = await prefreences.getString(addressKey);
+    if (jsonData == null) {
+      return [];
+    }
+
+    final decodedData = jsonDecode(jsonData) as List<dynamic>;
+
+    return decodedData.map((item) {
+      return Address.fromJson(item as Map<String, dynamic>);
+    }).toList();
+  }
+
+  Future<void> clearAddress() async {
+    await prefreences.remove(addressKey);
   }
 }

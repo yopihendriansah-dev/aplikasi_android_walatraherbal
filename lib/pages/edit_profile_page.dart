@@ -34,7 +34,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     super.dispose();
   }
 
-  void saveProfile() {
+  Future<void> saveProfile() async {
     if (!formKey.currentState!.validate()) {
       return;
     }
@@ -50,8 +50,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
       email: emailController.text.trim(),
     );
 
-    AuthManager.login(updateUser);
-
+    await AuthManager.login(updateUser);
+    if (!mounted) {
+      return;
+    }
     Navigator.pop(context);
   }
 

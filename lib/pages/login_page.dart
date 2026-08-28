@@ -132,12 +132,14 @@ class _LoginPageState extends State<LoginPage> {
                       email: emailController.text.trim(),
                     );
 
-                    AuthManager.login(user);
+                    await AuthManager.login(user);
 
                     setState(() {
                       isLoading = true;
                     });
-
+                    if (!context.mounted) {
+                      return;
+                    }
                     Navigator.pushReplacementNamed(context, '/home');
                   },
                 ),
