@@ -50,7 +50,11 @@ class MyApp extends StatelessWidget {
         '/favorites': (context) => const FavoritePage(),
         '/profile': (context) => const ProfilePage(),
         '/edit-profile': (context) => const EditProfilePage(),
-        '/addresses': (context) => const Addresspage(),
+        '/addresses': (context) {
+          final selectionMode =
+              ModalRoute.of(context)?.settings.arguments as bool? ?? false;
+          return AddressPage(selectionMode: selectionMode);
+        },
         '/add-address': (context) => const AddAddressPage(),
       },
 

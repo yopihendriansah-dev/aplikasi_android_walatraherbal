@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-
+import '../models/address.dart';
+import '../services/address_manager.dart';
 import '../services/cart_manager.dart';
 import '../utils/currency_formatter.dart';
 import '../widgets/app_button.dart';
-import '../widgets/app_text_field.dart';
 import '../models/order.dart';
 import '../services/order_manager.dart';
 
@@ -16,13 +16,34 @@ class CheckoutPage extends StatefulWidget {
 
 class _CheckoutPageState extends State<CheckoutPage> {
   final formKey = GlobalKey<FormState>();
-  final addressController = TextEditingController();
   String? selectedPaymentMethod;
+  Address? selectedAddress;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedAddress = AddressManager.defaultAddress;
+  }
 
   @override
   void dispose() {
-    addressController.dispose();
     super.dispose();
+  }
+
+  Future<void> chooseAddress() async {
+    final result = await Navigator.pushNamed(
+      context,
+      '/addresses',
+      arguments: true,
+    );
+
+    if (!mounted || result is! Address) {
+      return;
+    }
+
+    setState(() {
+      selectedAddress = result;
+    });
   }
 
   @override
@@ -47,16 +68,42 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 style: TextStyle(fontSize: 22, fontWeight: .bold),
               ),
               const SizedBox(height: 16),
-              AppTextField(
-                controller: addressController,
-                hintText: "Masukan alamat lengkap",
-                prefixIcon: Icons.location_on_outlined,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Alamat wajib diisi';
-                  }
-                  return null;
-                },
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Alamat Pengiriman',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      if (selectedAddress == null)
+                        const Text('Belum ada alamat utama')
+                      else
+                        Text(
+                          '${selectedAddress!.label}\n'
+                          '${selectedAddress!.recipientName}\n'
+                          '${selectedAddress!.phone}\n'
+                          '${selectedAddress!.fullAddress}',
+                        ),
+                      const SizedBox(height: 12),
+                      TextButton.icon(
+                        onPressed: chooseAddress,
+                        icon: const Icon(Icons.edit_location_alt_outlined),
+                        label: Text(
+                          selectedAddress == null
+                              ? 'Pilih Alamat'
+                              : 'Ganti Alamat',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
 
               const SizedBox(height: 16),
@@ -109,6 +156,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 icon: Icons.check_circle_outline,
 
                 onPressed: () async {
+                  if (selectedAddress == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Silakan pilih alamat pengiriman'),
+                      ),
+                    );
+                    return;
+                  }
+
                   if (!formKey.currentState!.validate()) {
                     return;
                   }
@@ -117,7 +173,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     id: DateTime.now().microsecondsSinceEpoch.toString(),
                     items: List.from(CartManager.items.value),
                     total: total,
-                    address: addressController.text.trim(),
+                    address: selectedAddress!.fullAddress,
                     paymentMethod: selectedPaymentMethod!,
                     createdAt: DateTime.now(),
                   );

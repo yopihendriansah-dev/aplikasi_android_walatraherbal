@@ -48,7 +48,7 @@ class AddressManager {
     await storage.saveAddresses(updateAddresses);
   }
 
-  static Address? get defautlAddress {
+  static Address? get defaultAddress {
     for (final address in addresses.value) {
       if (address.isDefault) {
         return address;

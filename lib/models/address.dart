@@ -37,7 +37,7 @@ class Address {
       'id': id,
       'label': label,
       'recipientName': recipientName,
-      'pohone': phone,
+      'phone': phone,
       'fullAddress': fullAddress,
       'isDefault': isDefault,
     };
@@ -45,11 +45,12 @@ class Address {
 
   factory Address.fromJson(Map<String, dynamic> json) {
     return Address(
-      id: json['id'] as String,
-      label: json['label'] as String,
-      recipientName: json['recipentName'] as String,
-      phone: json['phone'] as String,
-      fullAddress: json['fullAddress'] as String,
+      id: json['id'] as String? ?? '',
+      label: json['label'] as String? ?? '',
+      recipientName:
+          (json['recipientName'] ?? json['recipentName'] ?? '') as String,
+      phone: (json['phone'] ?? json['pohone'] ?? '') as String,
+      fullAddress: json['fullAddress'] as String? ?? '',
       isDefault: json['isDefault'] as bool? ?? false,
     );
   }

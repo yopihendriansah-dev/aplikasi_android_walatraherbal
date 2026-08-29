@@ -5,8 +5,10 @@ import '../services/address_manager.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_text_field.dart';
 
-class Addresspage extends StatelessWidget {
-  const Addresspage({super.key});
+class AddressPage extends StatelessWidget {
+  final bool selectionMode;
+
+  const AddressPage({super.key, this.selectionMode = false});
 
   @override
   Widget build(BuildContext context) {
@@ -58,6 +60,11 @@ class Addresspage extends StatelessWidget {
                       margin: const EdgeInsets.only(bottom: 12),
                       child: ListTile(
                         contentPadding: const .all(16),
+                        onTap: selectionMode
+                            ? () {
+                                Navigator.pop(context, address);
+                              }
+                            : null,
                         leading: Icon(
                           address.isDefault
                               ? Icons.check_circle
@@ -215,6 +222,19 @@ class _AddAddressPageState extends State<AddAddressPage> {
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Nama penerima wajib diisi';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              AppTextField(
+                controller: phoneControler,
+                hintText: 'Nomor telepon',
+                prefixIcon: Icons.phone_outlined,
+                keyboardType: TextInputType.phone,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Nomor telepon wajib diisi';
                   }
                   return null;
                 },
