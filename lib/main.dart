@@ -16,6 +16,7 @@ import 'models/product.dart';
 import 'models/order.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'pages/main_navigation_page.dart';
+import 'pages/product_image_viewer_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -74,6 +75,20 @@ class MyApp extends StatelessWidget {
           return MaterialPageRoute(
             builder: (context) {
               return OrderDetailPage(order: order);
+            },
+          );
+        }
+        if (settings.name == '/image-viewer') {
+          final arguments = settings.arguments as Map<String, dynamic>;
+          final images = List<String>.from(arguments['images'] as List);
+          final initialIndex = arguments['initialIndex'] as int? ?? 0;
+
+          return MaterialPageRoute(
+            builder: (context) {
+              return ProductImageViewerPage(
+                images: images,
+                initialIndex: initialIndex,
+              );
             },
           );
         }

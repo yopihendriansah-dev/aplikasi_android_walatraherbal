@@ -38,12 +38,19 @@ class ProductImage extends StatelessWidget {
           if (loadingProgress == null) {
             return child;
           }
+          final expectedBytes = loadingProgress.expectedTotalBytes;
 
-          return SizedBox(
-            width: imageWidth,
-            height: imageHeight,
-            child: const Center(
-              child: CircularProgressIndicator(strokeWidth: 2),
+          return ColoredBox(
+            color: Theme.of(context).colorScheme.surfaceContainerLowest,
+            child: Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Theme.of(context).colorScheme.primary,
+                backgroundColor: Colors.grey.shade300,
+                value: expectedBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / expectedBytes
+                    : null,
+              ),
             ),
           );
         },

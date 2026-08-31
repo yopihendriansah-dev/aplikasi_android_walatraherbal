@@ -15,6 +15,9 @@ class ProductDetailPage extends StatefulWidget {
 }
 
 class _ProductDetailPageState extends State<ProductDetailPage> {
+  final PageController pageController = PageController();
+  int currentImageIndex = 0;
+
   int quantity = 1;
 
   Product get product => widget.product;
@@ -35,7 +38,25 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   @override
+  void dispose() {
+    pageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> buyNow() async {
+    for (var i = 0; i < quantity; i++) {
+      await CartManager.add(product);
+    }
+    if (!mounted) {
+      return;
+    }
+
+    Navigator.pushNamed(context, '/checkout');
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final images = product.galleryImages;
     return Scaffold(
       appBar: AppBar(
         title: const Text('Detail Produk'),
@@ -72,13 +93,88 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               child: Container(
                 width: double.infinity,
                 color: Theme.of(context).colorScheme.surfaceContainerLowest,
-                child: ProductImage(
-                  imageUrl: widget.product.imageUrl,
-                  width: double.infinity,
-                  height: double.infinity,
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: Stack(
+                    children: [
+                      PageView.builder(
+                        controller: pageController,
+                        itemCount: images.isEmpty ? 1 : images.length,
+                        onPageChanged: (index) {
+                          setState(() {
+                            currentImageIndex = index;
+                          });
+                        },
+                        itemBuilder: (context, index) {
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.pushNamed(
+                                context,
+                                '/image-viewer',
+                                arguments: {
+                                  'images': images,
+                                  'initialIndex': index,
+                                },
+                              );
+                            },
+                            child: ProductImage(
+                              imageUrl: images.isEmpty ? null : images[index],
+                              width: double.infinity,
+                              height: double.infinity,
+                            ),
+                          );
+                        },
+                      ),
+                      if (images.length > 1)
+                        Positioned(
+                          right: 12,
+                          bottom: 12,
+                          child: Container(
+                            padding: const .symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black54,
+                              borderRadius: .circular(16),
+                            ),
+                            child: Text(
+                              '${currentImageIndex + 1}/${images.length}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: .bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
+            if (images.length > 1)
+              Padding(
+                padding: const .only(top: 12),
+                child: Row(
+                  mainAxisAlignment: .center,
+                  children: List.generate(images.length, (index) {
+                    final isActive = index == currentImageIndex;
+
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      margin: const .symmetric(horizontal: 4),
+                      width: isActive ? 20 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.grey.shade300,
+                        borderRadius: .circular(8),
+                      ),
+                    );
+                  }),
+                ),
+              ),
             const SizedBox(height: 24),
             Padding(
               padding: const .all(20),
@@ -116,13 +212,18 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       const SizedBox(height: 16),
                     ],
                   ),
-                  Text(
-                    CurrencyFormatter.format(product.price),
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: .bold,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        CurrencyFormatter.format(product.price),
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: .bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      Spacer(),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   const Text(
@@ -207,7 +308,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: AppButton(text: 'Beli Sekarang', onPressed: () {}),
+                    child: AppButton(text: 'Beli Sekarang', onPressed: buyNow),
                   ),
                 ],
               ),

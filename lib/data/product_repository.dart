@@ -11,6 +11,12 @@ class ProductRepository {
           'Essence Mascara Lash Princess adalah produk kategori Kecantikan untuk kebutuhan sehari-hari dengan desain praktis dan kualitas yang cocok untuk penggunaan rutin.',
       imageUrl:
           'https://cdn.dummyjson.com/product-images/beauty/essence-mascara-lash-princess/thumbnail.webp',
+      imageUrls: [
+        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6zxDcHA2imfXSduRTLFqvbY-ynkLnLUVNCylEjP5kpA&s=10',
+        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQK_w8mlrC3Y5atmpnPhvoAWXERB2AOlb51MauyL0lbSg&s=10',
+        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSHC6Cb3T_D7-QE8oih6sQ9Aaj-dS4s1hAGxL8ZCFX0-Q&s=10',
+      ],
+
       rating: 4.7,
       reviewCount: 52,
       soldCount: 34,
