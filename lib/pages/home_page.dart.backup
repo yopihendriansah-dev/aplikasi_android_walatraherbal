@@ -295,196 +295,180 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: CustomScrollView(
-        controller: scrollController,
-        slivers: [
-          // Banner Promo
-          const SliverToBoxAdapter(child: PromoBanner()),
+      body: Column(
+        children: [
+          const PromoBanner(),
 
-          // Katalog
-          SliverToBoxAdapter(
-            child: CatalogToolbar(
-              searchController: searchController,
-              onSearchChanged: (value) {
-                setState(() {
-                  searchQuery = value;
-                });
-                searchDebounce?.cancel();
-                searchDebounce = Timer(const Duration(milliseconds: 400), () {
-                  resetProducts();
-                });
-              },
+          CatalogToolbar(
+            searchController: searchController,
+            onSearchChanged: (value) {
+              setState(() {
+                searchQuery = value;
+              });
 
-              onFilterPressed: showFilterSheet,
-              onClearSearch: () {
-                searchController.clear();
-                setState(() {
-                  searchQuery = '';
-                });
-                searchDebounce?.cancel();
+              searchDebounce?.cancel();
+              searchDebounce = Timer(const Duration(milliseconds: 400), () {
                 resetProducts();
+              });
+            },
+            onFilterPressed: showFilterSheet,
+            onClearSearch: () {
+              searchController.clear();
+
+              setState(() {
+                searchQuery = '';
+              });
+
+              searchDebounce?.cancel();
+              resetProducts();
+            },
+          ),
+
+          SizedBox(
+            height: 44,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              scrollDirection: Axis.horizontal,
+
+              itemBuilder: (context, index) {
+                final category = categories[index];
+                return ChoiceChip(
+                  label: Text(category),
+                  selected: selectedCategory == category,
+                  onSelected: (selected) {
+                    setState(() {
+                      selectedCategory = category;
+                    });
+                    resetProducts();
+                  },
+                );
               },
+              separatorBuilder: (context, index) {
+                return const SizedBox(width: 8);
+              },
+              itemCount: categories.length,
             ),
           ),
-
-          // Kategori
-          SliverToBoxAdapter(
-            child: SizedBox(
-              height: 44,
-              child: ListView.separated(
-                padding: const .symmetric(horizontal: 16),
-                scrollDirection: .horizontal,
-
-                itemBuilder: (context, index) {
-                  final category = categories[index];
-
-                  return ChoiceChip(
-                    label: Text(category),
-                    selected: selectedCategory == category,
-                    onSelected: (sleected) {
-                      setState(() {
-                        selectedCategory = category;
-                      });
-                      resetProducts();
-                    },
-                  );
-                },
-                separatorBuilder: (context, index) {
-                  return const SizedBox(width: 8);
-                },
-                itemCount: categories.length,
-              ),
-            ),
-          ),
-
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
+          const SizedBox(height: 8),
           if (!isInitialLoading)
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Menampilkan ${filteredProducts.length} produk',
-                    style: TextStyle(fontSize: 13, color: Colors.grey),
-                  ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Align(
+                alignment: .centerLeft,
+                child: Text(
+                  'Menampilkan ${filteredProducts.length} produk',
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
                 ),
               ),
             ),
-
-          // Daftar Produk
-          if (isInitialLoading)
-            const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (errorMessage != null)
-            SliverFillRemaining(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        size: 56,
-                        color: Colors.redAccent,
+          Expanded(
+            child: isInitialLoading
+                ? const Center(child: CircularProgressIndicator())
+                : errorMessage != null
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: .min,
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            size: 56,
+                            color: Colors.redAccent,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            errorMessage!,
+                            textAlign: .center,
+                            style: const TextStyle(fontSize: 18),
+                          ),
+                          const SizedBox(height: 20),
+                          AppButton(
+                            text: 'Coba lagi',
+                            onPressed: loadFirstPage,
+                            icon: Icons.refresh,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        errorMessage!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 18),
-                      ),
-                      const SizedBox(height: 20),
-                      AppButton(
-                        text: 'Coba lagi',
-                        icon: Icons.refresh,
-                        onPressed: loadFirstPage,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            )
-          else if (filteredProducts.isEmpty)
-            SliverFillRemaining(
-              child: Center(
-                child: Text(
-                  searchQuery.trim().isEmpty
-                      ? 'Produk tidak ditemukan'
-                      : 'Produk "$searchQuery" tidak ditemukan',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 18),
-                ),
-              ),
-            )
-          else
-            SliverLayoutBuilder(
-              builder: (context, constraints) {
-                final width = constraints.crossAxisExtent;
-
-                final columnCount = width >= 900
-                    ? 4
-                    : width >= 600
-                    ? 3
-                    : 2;
-
-                return SliverPadding(
-                  padding: const EdgeInsets.all(12),
-                  sliver: SliverGrid(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: columnCount,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.55,
                     ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        if (index >= filteredProducts.length) {
-                          if (isLoadingMore) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
+                  )
+                : filteredProducts.isEmpty
+                ? Center(
+                    child: Text(
+                      searchQuery.trim().isEmpty
+                          ? 'Produk tidak ditemukan'
+                          : 'Produk "$searchQuery" tidak ditemukan',
+                      textAlign: .center,
+                      style: const TextStyle(fontSize: 18),
+                    ),
+                  )
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      final columnCount = constraints.maxWidth >= 900
+                          ? 4
+                          : constraints.maxWidth >= 600
+                          ? 3
+                          : 2;
+                      return GridView.builder(
+                        controller: scrollController,
+                        padding: const EdgeInsets.all(12),
+
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: columnCount,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.55,
+                        ),
+                        itemCount:
+                            filteredProducts.length +
+                            ((isLoadingMore || loadMoreError != null) ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index >= filteredProducts.length) {
+                            if (isLoadingMore) {
+                              return const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            }
+                            return Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: AppButton(
+                                text: 'Coba lagi',
+                                icon: Icons.refresh,
+                                onPressed: loadNextPage,
+                              ),
                             );
                           }
 
-                          return AppButton(
-                            text: 'Coba lagi',
-                            icon: Icons.refresh,
-                            onPressed: loadNextPage,
+                          final product = filteredProducts[index];
+                          return ValueListenableBuilder(
+                            valueListenable: FavoritesManager.items,
+                            builder: (context, value, child) {
+                              return ProductCard(
+                                product: product,
+                                isFavorite: FavoritesManager.isFavorite(
+                                  product,
+                                ),
+                                onTap: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/product-detail',
+                                    arguments: product,
+                                  );
+                                },
+                                onFavoritePressed: () async {
+                                  await FavoritesManager.toggle(product);
+                                },
+                              );
+                            },
                           );
-                        }
-
-                        final product = filteredProducts[index];
-
-                        return ValueListenableBuilder(
-                          valueListenable: FavoritesManager.items,
-                          builder: (context, value, child) {
-                            return ProductCard(
-                              product: product,
-                              isFavorite: FavoritesManager.isFavorite(product),
-                              onTap: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  '/product-detail',
-                                  arguments: product,
-                                );
-                              },
-                              onFavoritePressed: () async {
-                                await FavoritesManager.toggle(product);
-                              },
-                            );
-                          },
-                        );
-                      },
-                      childCount:
-                          filteredProducts.length +
-                          ((isLoadingMore || loadMoreError != null) ? 1 : 0),
-                    ),
+                        },
+                      );
+                    },
                   ),
-                );
-              },
-            ),
+          ),
         ],
       ),
     );

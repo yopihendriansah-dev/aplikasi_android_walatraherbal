@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_text_field.dart';
 import '../widgets/app_button.dart';
-import '../models/user.dart';
-import '../services/auth_manager.dart';
+import '../services/auth_api_service.dart';
+import '../utils/phone_formatter.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,16 +13,55 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final formKey = GlobalKey<FormState>();
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  bool obscurePassword = true;
+  final phoneController = TextEditingController();
+  String? errorMessage;
   bool isLoading = false;
 
   @override
   void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
+    phoneController.dispose();
     super.dispose();
+  }
+
+  // @override
+  Future<void> requestOtp() async {
+    if (!formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+    try {
+      final result = await AuthApiService.requestOtp(
+        phoneController.text.trim(),
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        isLoading = false;
+      });
+
+      Navigator.pushNamed(
+        context,
+        '/otp',
+        arguments: {
+          'phoneNumber': result.phoneNumber,
+          'otpPair': result.otpPair,
+        },
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        isLoading = false;
+        errorMessage = 'Gagal mengirim OTP. Silahkan coba lagi';
+      });
+    }
   }
 
   @override
@@ -51,97 +90,34 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 8),
                 AppTextField(
-                  controller: emailController,
-                  hintText: "Masukan email kamu",
-                  prefixIcon: Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress,
+                  controller: phoneController,
+                  hintText: "Masukan nomor whatsapp kamu",
+                  prefixIcon: Icons.phone_android_outlined,
+                  keyboardType: TextInputType.phone,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return "Email wajib diisi";
+                      return "Nomor whatsapp wajib diisi";
                     }
-                    if (!value.contains('@') || !value.contains('.')) {
-                      return "Format email tidak valid";
+
+                    if (!PhoneFormatter.isValid(value)) {
+                      return "Nomor whatsapp tidak valid";
                     }
                     return null;
                   },
                 ),
-                const SizedBox(height: 8),
-                AppTextField(
-                  controller: passwordController,
-                  hintText: "Masukan password kamu",
-                  prefixIcon: Icons.lock_outline,
-                  obscureText: obscurePassword,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      obscurePassword
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                    ),
 
-                    onPressed: () {
-                      setState(() {
-                        obscurePassword = !obscurePassword;
-                      });
-                    },
-                  ),
-
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Password wajib diisi";
-                    }
-                    if (value.length < 6) {
-                      return "Password minimal 6 karakter";
-                    }
-                    return null;
-                  },
-                ),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Fitur lupa password belum tersedia'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    },
-                    child: const Text('Lupa password?'),
-                  ),
-                ),
                 const SizedBox(height: 24),
-
+                if (errorMessage != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    errorMessage!,
+                    style: const TextStyle(color: Colors.red, fontSize: 14),
+                  ),
+                ],
                 AppButton(
                   text: 'Masuk',
                   isLoading: isLoading,
-                  onPressed: () async {
-                    if (!formKey.currentState!.validate()) {
-                      return;
-                    }
-
-                    await Future.delayed(const Duration(seconds: 2));
-                    if (!context.mounted) return;
-
-                    setState(() {
-                      isLoading = false;
-                    });
-
-                    final user = User(
-                      id: DateTime.now().microsecondsSinceEpoch.toString(),
-                      name: emailController.text.trim().split('@').first,
-                      email: emailController.text.trim(),
-                    );
-
-                    await AuthManager.login(user);
-
-                    setState(() {
-                      isLoading = true;
-                    });
-                    if (!context.mounted) {
-                      return;
-                    }
-                    Navigator.pushReplacementNamed(context, '/home');
-                  },
+                  onPressed: requestOtp,
                 ),
 
                 const SizedBox(height: 16),

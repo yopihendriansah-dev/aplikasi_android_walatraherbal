@@ -4,6 +4,16 @@ import 'package:new1/pages/home_page.dart';
 import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
 import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
+Future<void> scrollToProduct(WidgetTester tester, String productName) async {
+  await tester.scrollUntilVisible(
+    find.text(productName),
+    400,
+    scrollable: find.byType(Scrollable).first,
+  );
+
+  await tester.pumpAndSettle();
+}
+
 void main() {
   setUp(() {
     SharedPreferencesAsyncPlatform.instance =
@@ -22,6 +32,9 @@ void main() {
 
     expect(find.text('Beranda'), findsOneWidget);
     expect(find.text('Cari produk'), findsOneWidget);
+
+    await scrollToProduct(tester, 'Essence Mascara Lash Princess');
+
     expect(find.text('Essence Mascara Lash Princess'), findsOneWidget);
   });
 
@@ -39,7 +52,12 @@ void main() {
     // Tunggu proses fetchProducts 800 ms.
     await tester.pump(const Duration(milliseconds: 900));
 
+    await scrollToProduct(tester, 'Brown Leather Belt Watch');
+
     expect(find.text('Brown Leather Belt Watch'), findsOneWidget);
+
+    await scrollToProduct(tester, 'Longines Master Collection');
+
     expect(find.text('Longines Master Collection'), findsOneWidget);
   });
 
@@ -76,6 +94,8 @@ void main() {
     // Menunggu proses reset dan fetch data.
     await tester.pump(const Duration(milliseconds: 900));
 
+    await scrollToProduct(tester, 'Lemon');
+
     expect(find.text('Lemon'), findsOneWidget);
   });
 
@@ -95,6 +115,8 @@ void main() {
 
     // Menunggu proses reset dan fetch data.
     await tester.pump(const Duration(milliseconds: 900));
+
+    await scrollToProduct(tester, 'Rolex Submariner Watch');
 
     expect(find.text('Rolex Submariner Watch'), findsOneWidget);
   });

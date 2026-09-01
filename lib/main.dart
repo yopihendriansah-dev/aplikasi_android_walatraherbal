@@ -17,6 +17,7 @@ import 'models/order.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'pages/main_navigation_page.dart';
 import 'pages/product_image_viewer_page.dart';
+import 'pages/otp_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,6 +58,15 @@ class MyApp extends StatelessWidget {
           return AddressPage(selectionMode: selectionMode);
         },
         '/add-address': (context) => const AddAddressPage(),
+        '/otp': (context) {
+          final arguments =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>;
+          return OtpPage(
+            phoneNumber: arguments['phoneNumber'] as String,
+            otpPair: arguments['otpPair'] as String,
+          );
+        },
       },
 
       onGenerateRoute: (settings) {
