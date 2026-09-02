@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'login_page.dart';
 import '../models/order.dart';
 import '../models/user.dart';
 import '../services/auth_manager.dart';
@@ -38,13 +39,20 @@ class ProfilePage extends StatelessWidget {
       return;
     }
 
-    await AuthManager.logout();
+    try {
+      await AuthManager.logout();
+    } catch (error) {
+      debugPrint('Logout lokal gagal: $error');
+    }
 
     if (!context.mounted) {
       return;
     }
 
-    Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (route) => false,
+    );
   }
 
   @override

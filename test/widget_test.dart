@@ -14,8 +14,8 @@ void main() {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const MyApp());
     expect(find.text('Selamat datang'), findsOneWidget);
+    expect(find.text('Masukan nomor whatsapp kamu'), findsOneWidget);
     expect(find.text('Masuk'), findsOneWidget);
-    expect(find.text('Lupa password?'), findsOneWidget);
     expect(find.text('Daftar'), findsOneWidget);
   });
 
@@ -27,7 +27,7 @@ void main() {
     await tester.tap(find.text('Masuk'));
     await tester.pump();
 
-    expect(find.text('Email wajib diisi'), findsOneWidget);
+    expect(find.text('Nomor whatsapp wajib diisi'), findsOneWidget);
   });
 
   testWidgets('Tombol Daftar membuka halaman pendaftaran', (

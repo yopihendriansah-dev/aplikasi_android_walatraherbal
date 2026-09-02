@@ -4,11 +4,13 @@ import 'dart:async';
 import '../models/product.dart';
 import '../services/favorites_manager.dart';
 import '../services/cart_manager.dart';
+import '../services/auth_api_service.dart';
 import '../widgets/product_card.dart';
 import '../widgets/catalog_toolbar.dart';
 import '../data/product_repository.dart';
 import '../widgets/app_button.dart';
 import '../widgets/promo_banner.dart';
+import '../services/auth_manager.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -227,6 +229,19 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Future<void> testLoginCheck() async {
+    final token = AuthManager.authToken;
+
+    if (token == null || token.isEmpty) {
+      debugPrint('Token autentikasi tidak tersedia');
+      return;
+    }
+
+    final result = await AuthApiService.checkLogin(token: token);
+
+    debugPrint('LOGIN CHECK RESULT: $result');
+  }
+
   List<String> get categories {
     return ['Semua', ...products.map((product) => product.category).toSet()];
   }
@@ -292,6 +307,12 @@ class _HomePageState extends State<HomePage> {
             tooltip: 'Profil',
 
             icon: const Icon(Icons.person_outline),
+          ),
+          IconButton(
+            onPressed: testLoginCheck,
+            tooltip: 'Tes',
+
+            icon: const Icon(Icons.text_snippet),
           ),
         ],
       ),

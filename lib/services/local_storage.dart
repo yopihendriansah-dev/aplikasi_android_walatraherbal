@@ -9,6 +9,7 @@ class LocalStorage {
   static const favoriteIdsKey = 'favorite_product_ids';
   static const orderKey = 'orders';
   static const userKey = 'current_user';
+  static const authTokenKey = 'auth_token';
   static const addressKey = 'addresses';
 
   final SharedPreferencesAsync prefreences = SharedPreferencesAsync();
@@ -114,5 +115,17 @@ class LocalStorage {
 
   Future<void> clearAddress() async {
     await prefreences.remove(addressKey);
+  }
+
+  Future<void> saveAuthToken(String token) async {
+    await prefreences.setString(authTokenKey, token);
+  }
+
+  Future<String?> loadAuthToken() async {
+    return await prefreences.getString(authTokenKey);
+  }
+
+  Future<void> clearAuthToken() async {
+    await prefreences.remove(authTokenKey);
   }
 }

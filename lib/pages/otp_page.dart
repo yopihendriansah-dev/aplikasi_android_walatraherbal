@@ -48,7 +48,7 @@ class _OtpPageState extends State<OtpPage> {
     });
 
     try {
-      final success = await AuthApiService.confirmOtp(
+      final authToken = await AuthApiService.confirmOtp(
         phoneNumber: widget.phoneNumber,
         otpPair: currentOtpPair,
         otp: otpController.text.trim(),
@@ -57,10 +57,10 @@ class _OtpPageState extends State<OtpPage> {
         return;
       }
 
-      if (!success) {
+      if (authToken.isEmpty) {
         setState(() {
           isLoading = false;
-          errorMessage = 'OTP tidak valid';
+          errorMessage = 'Token autentikasi tidak ditemukan';
         });
         return;
       }
@@ -71,7 +71,7 @@ class _OtpPageState extends State<OtpPage> {
         email: '',
       );
 
-      await AuthManager.login(user);
+      await AuthManager.login(user, token: authToken);
 
       if (!mounted) {
         return;

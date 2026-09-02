@@ -48,20 +48,78 @@ class AuthApiService {
     );
   }
 
-  static Future<bool> confirmOtp({
+  static Future<String> confirmOtp({
     required String phoneNumber,
     required String otpPair,
     required String otp,
   }) async {
-    final resphone = await http.post(
+    final response = await http.post(
       Uri.parse('$baseUrl/otp'),
-
-      body: {'ponsel': phoneNumber, 'otp_pairs': otpPair, 'otp': otp},
+      body: {'otp_pairs': otpPair, 'ponsel': phoneNumber, 'otp': otp},
     );
-    if (resphone.statusCode < 200 || resphone.statusCode >= 300) {
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception('Server sedang bermasalah, silahkan coba lagi nanti');
     }
-    final json = jsonDecode(resphone.body) as Map<String, dynamic>;
+
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    final success = json['success'] == true;
+    final status = json['status'] == 'success';
+
+    if (!success || !status) {
+      throw Exception('Kode OTP tidak valid');
+    }
+
+    final authToken = json['auth'] as String?;
+
+    if (authToken == null || authToken.isEmpty) {
+      throw Exception('Token autentikasi tidak ditemukan');
+    }
+    return authToken;
+  }
+
+  static Future<Map<String, dynamic>?> checkLogin({
+    required String token,
+  }) async {
+    final uri = Uri.parse('$baseUrl/login-check');
+
+    try {
+      final response = await http.post(uri, body: {'token': token});
+
+      debugPrint('LOGIN CHECK URL: $uri');
+      debugPrint('LOGIN CHECK STATUS: ${response.statusCode}');
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        return null;
+      }
+
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+
+      debugPrint('LOGIN CHECK SUCCESS: ${json['success']}');
+
+      if (json['success'] != true || json['status'] != 'success') {
+        return null;
+      }
+
+      return json;
+    } catch (error, stackTrace) {
+      debugPrint('LOGIN CHECK ERROR: $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      return null;
+    }
+  }
+
+  static Future<bool> logout({required String token}) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/logout'),
+      body: {'token': token},
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Logout dari server gagal');
+    }
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
     return json['success'] == true && json['status'] == 'success';
   }
 }

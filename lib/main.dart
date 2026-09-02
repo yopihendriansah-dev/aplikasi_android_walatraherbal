@@ -14,6 +14,7 @@ import 'pages/product_detail_page.dart';
 import 'pages/profile_page.dart';
 import 'models/product.dart';
 import 'models/order.dart';
+import 'models/user.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'pages/main_navigation_page.dart';
 import 'pages/product_image_viewer_page.dart';
@@ -25,6 +26,7 @@ Future<void> main() async {
   await initializeDateFormatting('id_ID');
   await AuthManager.restoreSession();
   await AddressManager.load();
+  await AuthManager.restoreSession();
   runApp(const MyApp());
 }
 
@@ -44,7 +46,7 @@ class MyApp extends StatelessWidget {
       initialRoute: AuthManager.isLoggedIn ? '/home' : '/',
       routes: {
         '/': (context) => const LoginPage(),
-        '/home': (context) => const MainNavigationPage(),
+        '/home': (context) => const AuthGate(),
         '/register': (context) => const RegisterPage(),
         '/cart': (context) => const CartPage(),
         '/checkout': (context) => const CheckoutPage(),
@@ -104,6 +106,24 @@ class MyApp extends StatelessWidget {
         }
 
         return null;
+      },
+    );
+  }
+}
+
+class AuthGate extends StatelessWidget {
+  const AuthGate({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<User?>(
+      valueListenable: AuthManager.currentUser,
+      builder: (context, user, child) {
+        if (user == null || !AuthManager.isLoggedIn) {
+          return const LoginPage();
+        }
+
+        return const MainNavigationPage();
       },
     );
   }
