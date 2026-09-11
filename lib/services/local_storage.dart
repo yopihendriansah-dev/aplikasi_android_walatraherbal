@@ -10,6 +10,7 @@ class LocalStorage {
   static const orderKey = 'orders';
   static const userKey = 'current_user';
   static const authTokenKey = 'auth_token';
+  static const profileCompletionKey = 'requires_profile_completion';
   static const addressKey = 'addresses';
 
   final SharedPreferencesAsync prefreences = SharedPreferencesAsync();
@@ -127,5 +128,17 @@ class LocalStorage {
 
   Future<void> clearAuthToken() async {
     await prefreences.remove(authTokenKey);
+  }
+
+  Future<void> saveProfileCompletionRequirement(bool required) async {
+    await prefreences.setBool(profileCompletionKey, required);
+  }
+
+  Future<bool?> loadProfileCompletionRequirement() async {
+    return await prefreences.getBool(profileCompletionKey);
+  }
+
+  Future<void> clearProfileCompletionRequirement() async {
+    await prefreences.remove(profileCompletionKey);
   }
 }

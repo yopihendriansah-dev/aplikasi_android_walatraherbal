@@ -97,6 +97,8 @@ class ProfilePage extends StatelessWidget {
               return SingleChildScrollView(
                 child: Column(
                   children: [
+                    if (AuthManager.requiresProfileCompletion)
+                      const _IncompleteProfileCard(),
                     // header
                     Container(
                       width: double.infinity,
@@ -136,7 +138,7 @@ class ProfilePage extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  user.email,
+                                  user.email ?? user.phone,
                                   style: const TextStyle(color: Colors.white70),
                                 ),
                               ],
@@ -234,6 +236,24 @@ class ProfilePage extends StatelessWidget {
             },
           );
         },
+      ),
+    );
+  }
+}
+
+class _IncompleteProfileCard extends StatelessWidget {
+  const _IncompleteProfileCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: ListTile(
+        leading: const Icon(Icons.info_outline),
+        title: const Text('Profil belum lengkap'),
+        subtitle: const Text('Tambahkan nama Anda untuk melengkapi profil.'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => Navigator.pushNamed(context, '/edit-profile'),
       ),
     );
   }

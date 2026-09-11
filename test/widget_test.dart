@@ -13,10 +13,10 @@ void main() {
   testWidgets('Login page tampil dengan benar', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const MyApp());
-    expect(find.text('Selamat datang'), findsOneWidget);
-    expect(find.text('Masukan nomor whatsapp kamu'), findsOneWidget);
-    expect(find.text('Masuk'), findsOneWidget);
-    expect(find.text('Daftar'), findsOneWidget);
+    expect(find.text('Masuk ke Walatra'), findsOneWidget);
+    expect(find.text('Nomor WhatsApp'), findsOneWidget);
+    expect(find.text('Kirim Kode OTP'), findsOneWidget);
+    expect(find.text('Daftar'), findsNothing);
   });
 
   testWidgets('Validasi muncul ketika login kosong', (
@@ -24,31 +24,9 @@ void main() {
   ) async {
     await tester.pumpWidget(const MyApp());
 
-    await tester.tap(find.text('Masuk'));
+    await tester.tap(find.text('Kirim Kode OTP'));
     await tester.pump();
 
-    expect(find.text('Nomor whatsapp wajib diisi'), findsOneWidget);
-  });
-
-  testWidgets('Tombol Daftar membuka halaman pendaftaran', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(const MyApp());
-    await tester.tap(find.text('Daftar'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Buat akun baru'), findsOneWidget);
-  });
-
-  testWidgets('Validasi pendaftaran kosong', (WidgetTester teseter) async {
-    await teseter.pumpWidget(const MyApp());
-
-    await teseter.tap(find.text('Daftar'));
-    await teseter.pumpAndSettle();
-
-    await teseter.tap(find.text('Daftar'));
-    await teseter.pump();
-
-    expect(find.text('Nama wajib diisi'), findsOneWidget);
+    expect(find.text('Nomor WhatsApp wajib diisi'), findsOneWidget);
   });
 }

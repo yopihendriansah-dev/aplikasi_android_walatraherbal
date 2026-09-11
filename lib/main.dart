@@ -5,7 +5,6 @@ import 'pages/address_page.dart';
 import 'pages/login_page.dart';
 import 'pages/favorite_page.dart';
 import 'services/address_manager.dart';
-import 'pages/register_page.dart';
 import 'pages/cart_page.dart';
 import 'pages/checkout_page.dart';
 import 'pages/order_detail_page.dart';
@@ -26,7 +25,6 @@ Future<void> main() async {
   await initializeDateFormatting('id_ID');
   await AuthManager.restoreSession();
   await AddressManager.load();
-  await AuthManager.restoreSession();
   runApp(const MyApp());
 }
 
@@ -47,7 +45,6 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const LoginPage(),
         '/home': (context) => const AuthGate(),
-        '/register': (context) => const RegisterPage(),
         '/cart': (context) => const CartPage(),
         '/checkout': (context) => const CheckoutPage(),
         '/orders': (context) => const OrderHistoryPage(),
@@ -65,8 +62,10 @@ class MyApp extends StatelessWidget {
               ModalRoute.of(context)?.settings.arguments
                   as Map<String, dynamic>;
           return OtpPage(
-            phoneNumber: arguments['phoneNumber'] as String,
-            otpPair: arguments['otpPair'] as String,
+            phone: arguments['phone'] as String,
+            challengeId: arguments['challengeId'] as int,
+            expiresAt: arguments['expiresAt'] as DateTime?,
+            deliveryStatus: arguments['deliveryStatus'] as String? ?? 'unknown',
           );
         },
       },

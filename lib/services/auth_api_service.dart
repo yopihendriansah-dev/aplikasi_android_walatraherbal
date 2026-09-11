@@ -1,125 +1,171 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-
+import '../config/api_config.dart';
+import '../models/auth_session.dart';
+import '../models/otp_challenge.dart';
+import '../models/user.dart';
 import '../utils/phone_formatter.dart';
 
-class OtpRequestResult {
-  final String phoneNumber;
-  final String otpPair;
+class ApiException implements Exception {
+  final int statusCode;
+  final String message;
+  final int? retryAfter;
 
-  const OtpRequestResult({required this.phoneNumber, required this.otpPair});
+  const ApiException(this.message, {this.statusCode = 0, this.retryAfter});
+
+  @override
+  String toString() => message;
 }
 
 class AuthApiService {
-  static const String baseUrl = 'https://test.walatraherbal.com/api/account';
-  static Future<OtpRequestResult> requestOtp(String inputPhone) async {
-    final phoneNumber = PhoneFormatter.normalize(inputPhone);
+  static Uri _uri(String path) => Uri.parse('${ApiConfig.apiUrl}$path');
 
-    final response = await http.post(
-      Uri.parse('$baseUrl/login'),
-      body: {'nohp': phoneNumber},
-    );
-    debugPrint('Nomor HP : $phoneNumber');
-    debugPrint('OTP URL: ${baseUrl.trim()}/login');
-    debugPrint('OTP status: ${response.statusCode}');
-    debugPrint('OTP response: ${response.body}');
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Server sedang bermasalah, silahkan coba lagi nanti');
-    }
-
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    final success = json['success'] == true;
-
-    if (!success) {
-      throw Exception('Nomor Whatsapp tidak dapat diproses');
-    }
-
-    final data = json['data'] as Map<String, dynamic>?;
-    final otpPair = data?['otp-pair'] as String?;
-
-    if (otpPair == null || otpPair.isEmpty) {
-      throw Exception('Data OTP tidak lengkap');
-    }
-
-    return OtpRequestResult(
-      phoneNumber: data?['number'] as String? ?? phoneNumber,
-      otpPair: otpPair,
-    );
+  static Map<String, String> _headers({String? token}) {
+    return {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+    };
   }
 
-  static Future<String> confirmOtp({
-    required String phoneNumber,
-    required String otpPair,
-    required String otp,
-  }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/otp'),
-      body: {'otp_pairs': otpPair, 'ponsel': phoneNumber, 'otp': otp},
-    );
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Server sedang bermasalah, silahkan coba lagi nanti');
-    }
-
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    final success = json['success'] == true;
-    final status = json['status'] == 'success';
-
-    if (!success || !status) {
-      throw Exception('Kode OTP tidak valid');
-    }
-
-    final authToken = json['auth'] as String?;
-
-    if (authToken == null || authToken.isEmpty) {
-      throw Exception('Token autentikasi tidak ditemukan');
-    }
-    return authToken;
-  }
-
-  static Future<Map<String, dynamic>?> checkLogin({
-    required String token,
-  }) async {
-    final uri = Uri.parse('$baseUrl/login-check');
-
+  static Map<String, dynamic> _decode(http.Response response) {
     try {
-      final response = await http.post(uri, body: {'token': token});
-
-      debugPrint('LOGIN CHECK URL: $uri');
-      debugPrint('LOGIN CHECK STATUS: ${response.statusCode}');
-
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        return null;
-      }
-
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-
-      debugPrint('LOGIN CHECK SUCCESS: ${json['success']}');
-
-      if (json['success'] != true || json['status'] != 'success') {
-        return null;
-      }
-
-      return json;
-    } catch (error, stackTrace) {
-      debugPrint('LOGIN CHECK ERROR: $error');
-      debugPrintStack(stackTrace: stackTrace);
-
-      return null;
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map<String, dynamic>) return decoded;
+    } on FormatException {
+      // Fall through to a safe, user-facing error.
     }
+    throw ApiException(
+      'Respons server tidak valid',
+      statusCode: response.statusCode,
+    );
+  }
+
+  static Never _throwForStatus(http.Response response) {
+    final json = _decode(response);
+    final retryAfter = json['retry_after'];
+    throw ApiException(
+      json['message'] as String? ?? _defaultMessage(response.statusCode),
+      statusCode: response.statusCode,
+      retryAfter: retryAfter is num ? retryAfter.toInt() : null,
+    );
+  }
+
+  static String _defaultMessage(int statusCode) {
+    switch (statusCode) {
+      case 401:
+        return 'Sesi login tidak valid atau sudah berakhir';
+      case 403:
+        return 'Akun tidak aktif';
+      case 422:
+        return 'Data yang dikirim tidak valid';
+      case 429:
+        return 'Terlalu banyak percobaan. Silakan tunggu sebentar';
+      case 503:
+        return 'Layanan OTP sedang tidak tersedia';
+      default:
+        return 'Server sedang bermasalah, silakan coba lagi nanti';
+    }
+  }
+
+  static Future<OtpChallenge> requestOtp(String inputPhone) async {
+    final phone = PhoneFormatter.normalize(inputPhone);
+    final response = await http.post(
+      _uri('/auth/customer/request-otp'),
+      headers: _headers(),
+      body: jsonEncode({'phone': phone}),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      _throwForStatus(response);
+    }
+
+    final json = _decode(response);
+    final data = json['data'];
+    if (json['success'] != true || data is! Map<String, dynamic>) {
+      throw ApiException(
+        json['message'] as String? ?? 'OTP tidak dapat dikirim',
+      );
+    }
+    return OtpChallenge.fromJson(data, phone: phone);
+  }
+
+  static Future<AuthSession> verifyOtp({
+    required String phone,
+    required int challengeId,
+    required String otp,
+    required String deviceName,
+  }) async {
+    final response = await http.post(
+      _uri('/auth/customer/verify-otp'),
+      headers: _headers(),
+      body: jsonEncode({
+        'phone': phone,
+        'challenge_id': challengeId,
+        'otp': otp,
+        'device_name': deviceName,
+      }),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      _throwForStatus(response);
+    }
+
+    final json = _decode(response);
+    final data = json['data'];
+    if (json['success'] != true || data is! Map<String, dynamic>) {
+      throw ApiException(json['message'] as String? ?? 'Kode OTP tidak valid');
+    }
+    return AuthSession.fromJson(data);
+  }
+
+  static Future<User> getCurrentUser({required String token}) async {
+    final response = await http.get(
+      _uri('/auth/me'),
+      headers: _headers(token: token),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      _throwForStatus(response);
+    }
+    final json = _decode(response);
+    final data = json['data'];
+    final user = data is Map<String, dynamic> ? data['user'] : null;
+    if (json['success'] != true || user is! Map<String, dynamic>) {
+      throw ApiException('Data pengguna tidak ditemukan');
+    }
+    return User.fromJson(user);
+  }
+
+  static Future<User> updateProfile({
+    required String token,
+    required String name,
+  }) async {
+    final response = await http.patch(
+      _uri('/auth/customer/profile'),
+      headers: _headers(token: token),
+      body: jsonEncode({'name': name}),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      _throwForStatus(response);
+    }
+    final json = _decode(response);
+    final data = json['data'];
+    final user = data is Map<String, dynamic> ? data['user'] : null;
+    if (json['success'] != true || user is! Map<String, dynamic>) {
+      throw ApiException(
+        json['message'] as String? ?? 'Profil gagal diperbarui',
+      );
+    }
+    return User.fromJson(user);
   }
 
   static Future<bool> logout({required String token}) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/logout'),
-      body: {'token': token},
+      _uri('/auth/logout'),
+      headers: _headers(token: token),
     );
-
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Logout dari server gagal');
+      _throwForStatus(response);
     }
-    final json = jsonDecode(response.body) as Map<String, dynamic>;
-    return json['success'] == true && json['status'] == 'success';
+    final json = _decode(response);
+    return json['success'] == true;
   }
 }

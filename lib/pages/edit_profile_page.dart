@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:new1/widgets/app_text_field.dart';
-import '../models/user.dart';
+import '../services/auth_api_service.dart';
 import '../services/auth_manager.dart';
 import '../widgets/app_button.dart';
 
@@ -15,7 +15,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final formKey = GlobalKey<FormState>();
 
   late final TextEditingController nameController;
-  late final TextEditingController emailController;
+  bool isLoading = false;
+  String? errorMessage;
 
   @override
   void initState() {
@@ -23,14 +24,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
     final user = AuthManager.currentUser.value;
     nameController = TextEditingController(text: user?.name ?? '');
-
-    emailController = TextEditingController(text: user?.email ?? '');
   }
 
   @override
   void dispose() {
     nameController.dispose();
-    emailController.dispose();
     super.dispose();
   }
 
@@ -44,17 +42,34 @@ class _EditProfilePageState extends State<EditProfilePage> {
       return;
     }
 
-    final updateUser = User(
-      id: currentUser.id,
-      name: nameController.text.trim(),
-      email: emailController.text.trim(),
-    );
+    final token = AuthManager.authToken;
+    if (token == null || token.isEmpty) return;
 
-    await AuthManager.login(updateUser);
-    if (!mounted) {
-      return;
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+    try {
+      final updatedUser = await AuthApiService.updateProfile(
+        token: token,
+        name: nameController.text.trim(),
+      );
+      await AuthManager.updateCurrentUser(updatedUser);
+      if (!mounted) return;
+      Navigator.pushNamedAndRemoveUntil(context, '/home', (_) => false);
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+        errorMessage = error.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+        errorMessage = 'Profil gagal disimpan';
+      });
     }
-    Navigator.pop(context);
   }
 
   @override
@@ -78,27 +93,22 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
-              AppTextField(
-                controller: emailController,
-                hintText: 'Email',
-                prefixIcon: Icons.email_outlined,
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Email wajib diisi';
-                  }
-                  if (!value.contains('@')) {
-                    return 'Format email tidak valid';
-                  }
-                  return null;
-                },
-              ),
+              if (errorMessage != null) ...[
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    errorMessage!,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ),
+              ],
               const SizedBox(height: 24),
               AppButton(
                 text: 'Simpan Perubahan',
                 onPressed: saveProfile,
                 icon: Icons.save_outlined,
+                isLoading: isLoading,
               ),
             ],
           ),

@@ -237,9 +237,12 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    final result = await AuthApiService.checkLogin(token: token);
-
-    debugPrint('LOGIN CHECK RESULT: $result');
+    try {
+      final user = await AuthApiService.getCurrentUser(token: token);
+      debugPrint('LOGIN CHECK SUCCESS: ${user.id}');
+    } on ApiException catch (error) {
+      debugPrint('LOGIN CHECK FAILED: ${error.statusCode}');
+    }
   }
 
   List<String> get categories {
@@ -321,6 +324,9 @@ class _HomePageState extends State<HomePage> {
         slivers: [
           // Banner Promo
           const SliverToBoxAdapter(child: PromoBanner()),
+
+          if (AuthManager.requiresProfileCompletion)
+            SliverToBoxAdapter(child: _ProfileCompletionBanner(context)),
 
           // Katalog
           SliverToBoxAdapter(
@@ -507,6 +513,63 @@ class _HomePageState extends State<HomePage> {
               },
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _ProfileCompletionBanner extends StatelessWidget {
+  final BuildContext parentContext;
+
+  const _ProfileCompletionBanner(this.parentContext);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Card(
+        elevation: 0,
+        color: Theme.of(context).colorScheme.primaryContainer,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Icon(
+                Icons.person_add_alt_1_outlined,
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Lengkapi profil Anda',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Tambahkan nama agar pengalaman belanja lebih personal.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pushNamed(parentContext, '/edit-profile');
+                },
+                child: const Text('Lengkapi'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
